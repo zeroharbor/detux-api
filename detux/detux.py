@@ -54,12 +54,12 @@ class Detux(object):
         # setup stream logging handler
         self._handler = logging.StreamHandler()
         self._handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(module)s: %(message)s'))
-        self.handler.setLevel(logging.DEBUG)
+        self._handler.setLevel(logging.DEBUG)
 
         # create our logger for when verbose is used
         self._logger = logging.getLogger('detux-api')
         self._logger = self.logger.setLevel(logging.DEBUG)
-        self._logger.addHandler(self.handler)
+        self._logger.addHandler(self._handler)
 
 
     def msg(self, data):
