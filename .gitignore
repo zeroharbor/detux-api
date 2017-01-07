@@ -1,0 +1,28 @@
+# compiled
+*.pyc
+
+# virtual env stuff
+env/
+.env
+.venv/
+ENV
+
+# build things
+build/
+develop-eggs/
+dist/
+*.egg
+*.egg-info
+eggs/
+.eggs/
+dist/
+wheels/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# vim swap
+*~
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
