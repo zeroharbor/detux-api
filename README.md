@@ -1,50 +1,71 @@
 # detux-api
-Library to interact with the Detux.org Linux sandbox API written in Python. The author and this project is not affiliated with Detux.org in any way. _Better documentation is coming._ These first few commit dates are literally as I am writing the code and testing it so just hold out a bit longer ;-)
+Library to interact with the Detux.org Linux sandbox API written in Python. The author and this project is not affiliated with Detux.org in any way.
 
-## Requirements
-- Detux.org account + API key
-- Python 2.7 or higher
-- Python `requests` library
-- Python `boto3` library
-- Some Linux malware you want to research :)
-
-### Features
-- Search Detux.org by    
-    - Individual hash    
-    - Text file list of hashes    
+## Features
+- Search Detux.org by
+    - Individual hash
+    - Text file list of hashes
     - Hashes of all files in a given directory
-- Submit files for analysis    
-    - You can submit a single file or an entire directory of files    
-    - Provide filenames for submissions    
-    - Submissions can optionally be marked as private    
-    - Submissions can optionally include user comments
-- Retrieve analysis reports 
+- Submit files for analysis
+    - Submit a single file or an entire directory of files
+        - Multithreading optional for submissions that act on more than one file or hash
+    - Provide filenames for submissions
+    - Submissions can optionally be marked as private (not yet implemented)
+    - Submissions can optionally include user comments (not yet implemented)
+- Retrieve analysis reports
     - Return raw JSON reports
     - Save JSON reports to a nicely formatted local file
     - Upload JSON reports to an AWS S3 bucket
 - Optional multithreading on tasks that act against more than a single file or hash
 
 ### Example Uses
-Real documentation will be coming after I finish out the library. This is just the initial code and README I've written over the past day-ish.
+Real documentation will be coming in the 'docs' folder after I finish out the library.
 
-- **Check if a sample has already been uploaded and if not analyze it then save the report**
+***
+- **Check if a sample has already been uploaded and if not analyze it then save the report to a local JSON file**
+
 ```
 detux = Detux('your api key')
 sample_hash = detux.Utils.get_sha256('/path/to/evilmalware')
 
-if not detux.search(sample_hash):    
-    submission = detux.submit_file('/path/to/evilmalware')    
-    # might want to wait a bit for the file to be analyzed before this next step ...    
-    report_name = '%s.json' % sample_hash    
-    new_report = detux.report(submission.sha256, save=True, output=report_name)
+if not detux.search(sample_hash):
+    submission = detux.submit_file('/path/to/evilmalware')
+    # might want to wait a bit for the file to be analyzed before this next step ...
+    report_name = '%s.json' % sample_hash
+    new_report = detux.report(submission.sha256, save='json', output=report_name)
 ```
 
 ***
-- **Submit a directory of malware samples**
+- **Save a report to an S3 location**
+
 ```
-detux = Detux('your api key')
-detux.submit_directory('/path/to/malware/dir', threads=5)
+detux.verbose = True
+detux.report('7d9291fbd5ba96ede386e688584a6f873615a141a5363d4431499de5415c02c4',
+    save='s3', s3_bucket='samples', aws_key='your access ID key', aws_secret='your secret key',
+    output_file='myfolder/zeroaccess1.json')
 ```
+
+***
+- **Submit a directory of malware samples and store the results**
+
+Submit directory will keep a list of the JSON results returned from the submissions so you can iterate through them afterwards
+to ensure everything was correctly uploaded.
+
+```
+# submit directory of samples using 5 threads
+results = detux.submit_directory('/path/to/malware/dir', threads=5)
+
+# submit directory of samples and send their base filename to Detux
+# the "threads" argument defaults to None so this example is not threaded
+results2 = detux.submit_directory('/path/to/malware/dir', use_filenames=True)
+
+
+```
+
+
+***
+- **Next Example**
+
 
 ### License
 This project uses the GNU GPLv3 license and is made available in it's full form in the `LICENSE` file.
