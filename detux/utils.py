@@ -4,7 +4,7 @@
 #    Python library to interact with the Detux.org API and an accompanying CLI application
 #    using the library for more straight forward user access.
 #
-#    Copyright (C) 2016  Adam M. Swanda (adam@zeroharbor.com)
+#    Copyright (C) 2017  Adam M. Swanda (adam@zeroharbor.com)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
