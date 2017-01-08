@@ -4,7 +4,7 @@
 #    Python library to interact with the Detux.org API and an accompanying CLI application
 #    using the library for more straight forward user access.
 #
-#    Copyright (C) 2016  Adam M. Swanda (adam@zeroharbor.com)
+#    Copyright (C) 2017  Adam M. Swanda (adam@zeroharbor.com)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
 
 class Store(object):
+    """ Save Detux JSON reports to either disk or an S3 bucket and key """
     def __init__(self, aws_access_id=None, aws_secret_key=None, aws_region=None):
         self.aws_key = aws_access_id
         self.aws_private = aws_secret_key
@@ -41,11 +42,13 @@ class Store(object):
 
 
     def _connect_s3(self):
+        """ Initialize connection to AWS S3 """
         _s3 = boto3.resource('s3', region_name=self.aws_region, aws_access_key_id=self.aws_key, aws_secret_access_key=self.aws_private)
         return _s3
 
 
     def _verify_bucket(self, bucket_name):
+        """ Attempt to verify that an S3 bucket exists before trying to write to it """
         s3 = self._connect_s3()
         try:
             s3.meta.client.head_bucket(Bucket=bucket_name)
