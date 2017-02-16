@@ -1,3 +1,5 @@
+[![Say Thanks](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg?style=flat)](https://saythanks.io/to/deadbits) [![Donate](https://img.shields.io/badge/donate-BTC-blue.svg?style=flat)](https://www.coinbase.com/deadbits)
+
 # detux-api
 Library to interact with the Detux.org Linux sandbox API written in Python. The author and this project is not affiliated with Detux.org in any way.
 
