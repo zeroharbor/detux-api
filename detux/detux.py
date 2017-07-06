@@ -58,7 +58,7 @@ class Detux(object):
 
         # create our logger for when verbose is used
         self._logger = logging.getLogger('detux-api')
-        self._logger = self.logger.setLevel(logging.DEBUG)
+        self._logger = self._logger.setLevel(logging.DEBUG)
         self._logger.addHandler(self._handler)
 
 
@@ -71,6 +71,7 @@ class Detux(object):
     def send_request(self, endpoint, data):
         """ Send API POST request and return full response if successful or error message if failed """
         self.msg('sending POST to %s' % endpoint)
+
         try:
             req = requests.post(endpoint, data=data)
 
