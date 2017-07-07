@@ -23,3 +23,4 @@
 from .detux import Detux
 from .detux import Store
 from .detux import Utils
+from .detux import Validate

@@ -21,10 +21,16 @@
 # ========
 
 import os
+import json
 import base64
 import hashlib
 
+from datetime import datetime
+
 from StringIO import StringIO
+
+
+jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
 
 class Utils(object):
@@ -50,21 +56,11 @@ class Utils(object):
         """ attempt to make a directory and set permissions"""
         if os.path.isdir(path):
             return True
-
         try:
             os.mkdir(path)
             return True
         except Exception as err:
             raise err
-
-
-    @staticmethod
-    def is_file_valid(file_path):
-        """ verify that file exists, is not a directory and has a greater than 0 size """
-        if os.path.exists(file_path) and os.path.isfile(file_path) \
-                and os.path.getsize(file_path) > 0:
-            return True
-        return False
 
 
     @staticmethod

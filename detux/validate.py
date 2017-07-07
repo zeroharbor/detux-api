@@ -19,11 +19,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ========
-
+import os
 import re
-
-from .utils.Utils import is_file_valid
-
 
 class Validate(object):
     """ Verifies arguments passed to functions are correct """
@@ -31,6 +28,15 @@ class Validate(object):
     def check_type(arg_name, correct_type, message):
         if not isinstance(arg_name, correct_type):
             raise TypeError(message)
+
+    @staticmethod
+    def is_file_valid(file_path):
+        """ verify that file exists, is not a directory and has a greater than 0 size """
+        if os.path.exists(file_path) and os.path.isfile(file_path) \
+                and os.path.getsize(file_path) > 0:
+            return True
+        return False
+
 
     @staticmethod
     def sha256(data):
@@ -52,12 +58,14 @@ class Validate(object):
 
     @staticmethod
     def file_path(file_path):
-        if not is_file_valid(file_path):
+        if not Validate.is_file_valid(file_path):
             raise TypeError('provided file either does not exist or has a zero file size')
 
 
+    # @note: the functions below here are not currently being used and probably arent needed at all tbh..
+    @staticmethod
     def submit(self, file_path, comments=None, file_name=None, _threaded=False):
-        if not is_file_valid(file_path):
+        if not Validate.is_file_valid(file_path):
             raise TypeError('provided "file_path" either does not exist or has a zero file size')
 
         if comments is not None:
@@ -67,6 +75,7 @@ class Validate(object):
             Validate.check_type(file_name, str, 'file_name must be a string')
 
 
+    @staticmethod
     def search(self, content=None, start=None):
         if content is not None:
             Validate.check_type(content, str, '"content" must be a string')
@@ -75,6 +84,7 @@ class Validate(object):
             Validate.check_type(start, int, '"start" argument must be an integer')
 
 
+    @staticmethod
     def report(self, sha256=None, save=None, output=None, s3_bucket=None, aws_key=None, aws_secret=None, aws_region=None, _threaded=False):
         Validate.check_type(sha256, str, 'sha256 must be a string')
 
