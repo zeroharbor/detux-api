@@ -21,10 +21,16 @@
 # ========
 
 import os
+import json
 import base64
 import hashlib
 
+from datetime import datetime
+
 from StringIO import StringIO
+
+
+jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
 
 class Utils(object):
