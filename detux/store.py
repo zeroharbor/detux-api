@@ -19,6 +19,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ========
+from __future__ import absolute_import
 
 import os
 import json
@@ -28,8 +29,7 @@ from datetime import datetime
 
 from StringIO import StringIO
 
-
-jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
+from .utils import jsondate
 
 
 class Store(object):
@@ -94,3 +94,4 @@ class Store(object):
             bucket.upload_fileobj(temp_fp, key_name)
             temp_fp.close()
             return True
+        return False
