@@ -19,18 +19,19 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ========
+from __future__ import absolute_import
 
 import os
 import re
 import logging
-import logging.handlers
 import requests
 import threading
 import Queue
 
-# local libraries
+from . import logger
 from .utils import Utils
 from .store import Store
+from .validate import Validate
 
 
 __version__ = '0.0.1'
@@ -50,16 +51,7 @@ class Detux(object):
             'report': 'https://detux.org/api/report.php' }
         self.sha256_re = r"\b([a-f0-9]{64}|[A-F0-9]{64})\b"
         self.verbose = verbose
-
-        # setup stream logging handler
-        self._handler = logging.StreamHandler()
-        self._handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(module)s: %(message)s'))
-        self._handler.setLevel(logging.DEBUG)
-
-        # create our logger for when verbose is used
-        self._logger = logging.getLogger('detux-api')
-        self._logger = self._logger.setLevel(logging.DEBUG)
-        self._logger.addHandler(self._handler)
+        self._logger = logger.setup_logger()
 
 
     def msg(self, data):
@@ -86,9 +78,11 @@ class Detux(object):
 
             self.msg('msg="POST request returned non-200 HTTP status code" endpoint="%s"' % endpoint)
             result = {
-                'status': req.status_code,
+                'status': 'failed',
+                'http_code': req.status_code,
                 'endpoint': endpoint,
                 'error': 'POST request returned non-200 HTTP status code'}
+
             return result
 
         except Exception as err:
@@ -104,19 +98,23 @@ class Detux(object):
             first page of 20 results and then search('foo', 21) would return results 21 to 40
             and so on. The JSON results does not tell you how many total pages there are.
         """
-        if not isinstance(content, str):
-            raise TypeError('content argument must be a string')
-
         endpoint = self.urls['search']
-        data = {'api_key': self.api_key, 'search': content}
+
+        Validate.check_type(content, str, 'content argument must be a string')
+
+        data = {'api_key': self.api_key, 'search': content, 'from': 1}
 
         if start is not None:
             if not start.isdigit():
-                raise TypeError('start argument must be a digit')
+                raise TypeError('start argument must be a digit (user specified: %s)' % start)
 
-            self.msg('msg="search request starting from offset %d' % int(start))
-            data['from'] = int(start)
+            start = int(start)
+            if start < 0:
+                raise ValueError('start argument cannot be 0 or lower (user specified: %d)' % start)
 
+            data['from'] = start
+        
+        self.msg('msg="search request starting from offset %d' % start)
         return self.send_request(endpoint, data)
 
 
@@ -124,28 +122,34 @@ class Detux(object):
         """ Search Detux for an existing report by a files SHA256 hash and get the JSON results """
         endpoint = self.urls['report']
 
-        if not isinstance(sha256, str):
-            raise TypeError('sha256 must be a string')
-
-        if save is not None:
-            if not isinstance(save, str):
-                raise TypeError('save must be a string of either "s3" or "json"')
-            if output_file is None:
-                raise TypeError('"output" argument must be specified when using "save" argument')
-
+        Validate.check_type(sha256, str, 'sha256 must be a string')
         m = re.match(self.sha256_re, sha256, re.IGNORECASE)
         if type(m.group()) is None:
             raise TypeError('sha256 argument is not a valid hash')
+
+        if save is not None:
+            Validate.check_type(save, str, 'save must be a string of either "s3" or "json"')
+            if save not in ['s3', 'json']:
+                raise ValueError('save must be a string of either "s3" or "json"')
+            if output_file is None:
+                raise TypeError('"output" argument must be specified when using "save" argument')
 
         data = {'api_key': self.api_key, 'sha256': sha256}
         report = self.send_request(endpoint, data)
 
         if save == 'json':
             self.msg('msg="attempting to store JSON report to disk" file="%s"' % output_file)
-            Store().to_disk(report, output_file)
+            if Store().to_disk(report, output_file):
+                self.msg('msg="JSON report successfully saved to disk" file="%s"' % output_file)
+            else:
+                self.msg('msg="failed to save JSON report to disk" file="%s" % output_file)
+
         elif save == 's3':
             self.msg('msg="attempting to store JSON report to S3" bucket="%s" key="%s"' % (s3_bucket, output_file))
-            Store(aws_access_id=aws_key, aws_secret_key=aws_secret, aws_region=aws_region).to_s3(report, s3_bucket, output_file)
+            if Store(aws_access_id=aws_key, aws_secret_key=aws_secret, aws_region=aws_region).to_s3(report, s3_bucket, output_file):
+                self.msg('msg="JSON report successfully saved to S3" bucket="%s" key="%s"' % (s3_bucket, output_file))
+            else:
+                self.msg('msg="failed to save JSON report to S3" bucket="%s" key="%s"' % (s3_bucket, output_file))
 
         if save is None:
             return report
@@ -155,23 +159,21 @@ class Detux(object):
         """ Submit an individual file to Detux for analysis """
         endpoint = self.urls['submit']
 
-        if not Utils.is_file_valid(file_path):
+        if not Validate.is_file_valid(file_path):
             raise TypeError('provided file either does not exist or has a zero file size')
 
-        encoded_file = self.encode_file(file_path)
+        encoded_file = Utils.encode_file(file_path)
         if encoded_file is None:
             raise TypeError('Base64 encoding of file %s failed: unable to upload' % file_path)
 
         data = {'api_key': self.api_key, 'file': encoded_file}
 
         if comments is not None:
-            if not isinstance(comments, str):
-                raise TypeError('comments argument must be a string')
+            Validate.check_type(comments, str, 'comments argument must be a string')
             data['comments'] = comments
 
         if file_name is not None:
-            if not isinstance(file_name, str):
-                raise TypeError('file_name argument must be a string')
+            Validate.check_type(file_name, str, 'file_name argument must be a string')
             data['file_name'] = file_name
 
         if _threaded:
@@ -182,18 +184,31 @@ class Detux(object):
         return self.send_request(endpoint, data)
 
 
+    def submit_worker(self, file_queue, use_filenames):
+        while file_queue.empty() is False:
+            next_file = file_queue.get()
+            if use_filenames:
+                self.submit_file(next_file, file_name=os.path.basename(next_file))
+            else:
+                self.submit_file(next_file)
+            file_queue.task_done()
+
+
     def submit_directory(self, dir_path, use_filenames=False, threads=None):
+        results_list = []
+
         if not os.path.isdir(dir_path):
             raise TypeError('dir_path argument is not a directory')
 
-        results_list = []
         files = Utils.list_directory(dir_path)
-
-        self.msg('msg="attempting to submit contents of directory" path="%s"' % dir_path)
-
+        if len(files) == 0:
+            self.msg('msg="no files were found in submission directory" path="%s"' % dir_path)
+            return results_list
+        
         if threads is not None:
+            Validate.check_type(threads, int, 'threads argument must be an integer')
             if (0 < threads > 25) or (0 < threads > len(files)):
-                raise TypeError('threads argument cannt be larger than 25 or the amount of files in dir_path argument')
+                raise ValueError('threads argument cannt be larger than 25 or the amount of files in dir_path argument')
 
             running_threads = []
             file_queue = Queue.Queue()
@@ -217,20 +232,11 @@ class Detux(object):
                 t.join()
 
             results_list = [report for report in file_queue.queue]
-
-        for f in files:
-            self.msg('msg="attempting to submit file" file="%s" path="%s"' % (f, dir_path))
-            report = self.submit_file(file_path=f, file_name=use_filenames)
-            results_list.append(report)
+        
+        else:
+            for f in files:
+                self.msg('msg="attempting to submit file" file="%s" path="%s"' % (f, dir_path))
+                report = self.submit_file(file_path=f, file_name=use_filenames)
+                results_list.append(report)
 
         return results_list
-
-
-    def submit_worker(self, file_queue, use_filenames):
-        while file_queue.empty() is False:
-            next_file = file_queue.get()
-            if use_filenames:
-                self.submit_file(next_file, file_name=os.path.basename(next_file))
-            else:
-                self.submit_file(next_file)
-            file_queue.task_done()
