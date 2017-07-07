@@ -62,6 +62,7 @@ class Validate(object):
             raise TypeError('provided file either does not exist or has a zero file size')
 
 
+    # @note: the functions below here are not currently being used and probably arent needed at all tbh..
     @staticmethod
     def submit(self, file_path, comments=None, file_name=None, _threaded=False):
         if not Validate.is_file_valid(file_path):
