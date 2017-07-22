@@ -3,6 +3,8 @@
 # detux-api
 Library to interact with the Detux.org Linux sandbox API written in Python. The author and this project is not affiliated with Detux.org in any way.
 
+**July 22nd Update:** This project is undergoing a rehaul and the current master branch may not work as explained below. We are working on this now and should have the next release ready within 1-2 weeks
+
 ## Features
 - Search Detux.org by
     - Individual hash
