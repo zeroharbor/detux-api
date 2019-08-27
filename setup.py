@@ -21,7 +21,7 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=[
-        'requests==2.8.1',
+        'requests=='2.20.0',
         'boto3==1.4.3'
     ],
     classifiers=[
