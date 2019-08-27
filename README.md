@@ -1,9 +1,10 @@
 [![Say Thanks](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg?style=flat)](https://saythanks.io/to/deadbits) [![Donate](https://img.shields.io/badge/donate-BTC-blue.svg?style=flat)](https://www.coinbase.com/deadbits)
 
 # detux-api
+**IMPORTANT:** Unfortunately, the detux.org sandbox is no longer available online, therefore using this script with the default URL will fail.
+Thankfully though, Detux has made the source code for their sandbox publicly available on Github. This script can still be used with your own build of Detux- just make sure you change the base URL! :)
 Library to interact with the Detux.org Linux sandbox API written in Python. The author and this project is not affiliated with Detux.org in any way.
 
-**July 22nd Update:** This project is undergoing a rehaul and the current master branch may not work as explained below. We are working on this now and should have the next release ready within 1-2 weeks
 
 ## Features
 - Search Detux.org by
